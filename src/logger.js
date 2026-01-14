@@ -4,7 +4,7 @@ import pino from 'pino';
 import { config } from './config.js';
 
 fs.mkdirSync(config.logDir, { recursive: true });
-
+ 
 const logFile = path.join(config.logDir, 'manage-offer.log');
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
