@@ -1,0 +1,25 @@
+{
+  "name": "manage-offer-service",
+  "version": "1.0.0",
+  "description": "Node.js rewrite of manageOfferRequest.php",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "concurrently \"ssh -o ExitOnForwardFailure=yes -N -L 5432:127.0.0.1:5432 app@46.224.14.150\" \"nodemon src/server.js\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^13.6.0",
+    "google-auth-library": "^9.14.1",
+    "node-fetch": "^3.3.2",
+    "node-schedule": "^2.1.1",
+    "pg": "^8.13.1",
+    "pino": "^9.4.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.7"
+  }
+}

@@ -1,0 +1,321 @@
+-- dev.banners definition
+
+-- Drop table
+
+-- DROP TABLE dev.banners;
+
+CREATE TABLE dev.banners (
+	id serial4 NOT NULL,
+	"location" text NOT NULL,
+	image_url text NULL,
+	link_url text NULL,
+	cta_ios text NULL,
+	cta_android text NULL,
+	valid_from timestamptz NULL,
+	valid_to timestamptz NULL,
+	active bool DEFAULT true NULL,
+	category text NULL,
+	CONSTRAINT banners_pkey PRIMARY KEY (id)
+);
+CREATE INDEX idx_banners_valid_dates ON dev.banners USING btree (valid_from, valid_to);
+
+-- Table Triggers
+
+create trigger banners_change_trigger after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.banners for each row execute function dev.notify_banners_change();
+
+
+-- dev.favorites definition
+
+-- Drop table
+
+-- DROP TABLE dev.favorites;
+
+CREATE TABLE dev.favorites (
+	uid text NULL,
+	created_at timestamptz DEFAULT now() NULL,
+	"key" text NULL,
+	"type" text NULL,
+	category varchar NULL,
+	store varchar NULL,
+	min_price numeric NULL,
+	max_price numeric NULL,
+	min_discount numeric NULL
+);
+CREATE UNIQUE INDEX favorites_uid_idx ON dev.favorites USING btree (uid, key, category, store, min_price, max_price, min_discount);
+
+-- Table Triggers
+
+create trigger trg_notify_favorites after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.favorites for each row execute function dev.notify_favorite_change();
+
+
+-- dev.offers definition
+
+-- Drop table
+
+-- DROP TABLE dev.offers;
+
+CREATE TABLE dev.offers (
+	offer_id text NOT NULL,
+	post_id uuid NULL,
+	timestamp_created int8 NULL,
+	timestamp_edited int8 NULL,
+	"timestamp" int8 NULL,
+	code varchar(200) NULL,
+	link text NULL,
+	short_link text NULL,
+	"domain" varchar(100) NULL,
+	channel_id int8 NULL,
+	title text NULL,
+	edited_title text NULL,
+	price varchar(20) NULL,
+	old_price varchar(20) NULL,
+	price_numeric numeric(10, 2) NULL,
+	oldprice_numeric numeric(10, 2) NULL,
+	currency varchar(5) NULL,
+	discount_amount numeric(10, 2) NULL,
+	perc int4 NULL,
+	discount_percentage numeric(5, 2) NULL,
+	disc varchar(20) NULL,
+	category varchar(100) NULL,
+	category_original varchar(100) NULL,
+	sub_categories text NULL,
+	store varchar(100) NULL,
+	store_name varchar(100) NULL,
+	telegram_id int8 NULL,
+	image text NULL,
+	original_image text NULL,
+	is_used bool NULL,
+	is_lowest_price bool NULL,
+	lowest_price int4 NULL,
+	average_price int4 NULL,
+	average90_price int4 NULL,
+	maximum_price int4 NULL,
+	is_lightning_deal bool NULL,
+	lightning_deal_end int8 NULL,
+	lightning_deal_requested_percentage int4 NULL,
+	subscribe_and_save_percentage int4 NULL,
+	graph_link text NULL,
+	coupon varchar(255) NULL,
+	description text NULL,
+	is_expired bool NULL,
+	timestamp_expired int8 NULL,
+	is_deleted bool NULL,
+	post_type varchar(50) NULL,
+	is_vpc bool NULL,
+	vpc_discount int4 NULL,
+	vpc_text varchar(255) NULL,
+	checkout_discount varchar(20) NULL,
+	custom1 text NULL,
+	custom2 text NULL,
+	custom3 text NULL,
+	custom4 text NULL,
+	custom5 text NULL,
+	custom6 text NULL,
+	sold_by varchar(255) NULL,
+	shipped_by varchar(255) NULL,
+	reviews_total int4 NULL,
+	reviews_stars numeric(3, 1) NULL,
+	feedback_seller_perc varchar(10) NULL,
+	feedback_seller_count int4 NULL,
+	formatted_date varchar(20) NULL,
+	formatted_time varchar(10) NULL,
+	message text NULL,
+	message_no_link text NULL,
+	tags jsonb NULL,
+	features jsonb NULL,
+	api_exclusive bool NULL,
+	super_offer bool NULL,
+	super_offer_forced bool NULL,
+	is_explicit bool NULL,
+	is_alcool bool NULL,
+	is_event bool NULL,
+	daily_offer bool NULL,
+	main_category varchar(50) NULL,
+	search_vector tsvector NULL,
+	title_search_vector tsvector NULL,
+	pinned bool DEFAULT false NULL,
+	pinned_locally bool DEFAULT false NULL,
+	CONSTRAINT offers_pk PRIMARY KEY (offer_id)
+);
+
+-- Table Triggers
+
+create trigger trigger_offer_change after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.offers for each row execute function dev.notify_offer_change();
+create trigger trg_offers_audit after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.offers for each row execute function dev.fn_offers_audit();
+
+
+-- dev.offers_history definition
+
+-- Drop table
+
+-- DROP TABLE dev.offers_history;
+
+CREATE TABLE dev.offers_history (
+	history_id bigserial NOT NULL,
+	changed_at timestamptz DEFAULT now() NOT NULL,
+	offer_id text NOT NULL,
+	column_name text NOT NULL,
+	old_value text NULL,
+	new_value text NULL,
+	operation text NOT NULL,
+	changed_by text DEFAULT CURRENT_USER NOT NULL,
+	CONSTRAINT offers_history_pkey PRIMARY KEY (history_id)
+);
+CREATE INDEX idx_offers_history_changed_at ON dev.offers_history USING btree (changed_at);
+
+-- Table Triggers
+
+create trigger trg_notify_offers_history after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.offers_history for each row execute function dev.notify_offer_history_change();
+
+
+-- dev.products definition
+
+-- Drop table
+
+-- DROP TABLE dev.products;
+
+CREATE TABLE dev.products (
+	id serial4 NOT NULL,
+	product text NOT NULL,
+	product_normalized text NULL,
+	search_vector tsvector NULL,
+	CONSTRAINT products_pkey PRIMARY KEY (id)
+);
+CREATE INDEX idx_products_search_vector ON dev.products USING gin (search_vector);
+
+-- Table Triggers
+
+create trigger trg_products_normalize before
+insert
+    or
+update
+    on
+    dev.products for each row execute function dev.products_normalize_trigger();
+
+
+-- dev.users definition
+
+-- Drop table
+
+-- DROP TABLE dev.users;
+
+CREATE TABLE dev.users (
+	uid text NOT NULL,
+	token_fcm text NULL,
+	photo_url text NULL,
+	created_at timestamptz DEFAULT now() NULL,
+	last_login_at timestamptz DEFAULT now() NULL,
+	promotions bool DEFAULT false NULL,
+	display_name text NULL,
+	email text NULL,
+	superoffers bool DEFAULT true NULL,
+	favorites_searches bool DEFAULT true NULL,
+	favorites_products bool DEFAULT true NULL,
+	"admin" bool DEFAULT false NULL,
+	date_of_birth date NULL,
+	theme text NULL,
+	phone_number text NULL,
+	invite_code text DEFAULT ((chr(65 + floor(random() * 26::double precision)::integer) || lpad(floor(random() * 10000::double precision)::bigint::text, 4, '0'::text)) || '-'::text) || lpad(floor(random() * 10000::double precision)::bigint::text, 4, '0'::text) NULL,
+	used_code text NULL,
+	CONSTRAINT users_pk PRIMARY KEY (uid),
+	CONSTRAINT users_unique UNIQUE (invite_code)
+);
+
+-- Table Triggers
+
+create trigger trg_notify_users after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.users for each row execute function dev.notify_user_change();
+
+
+-- dev.notifications definition
+
+-- Drop table
+
+-- DROP TABLE dev.notifications;
+
+CREATE TABLE dev.notifications (
+	offer_id text NULL,
+	title text NULL,
+	body text NULL,
+	"target" text NULL,
+	created_at timestamptz DEFAULT now() NULL,
+	id serial4 NOT NULL,
+	CONSTRAINT notifications_pk PRIMARY KEY (id),
+	CONSTRAINT notifications_offers_fk FOREIGN KEY (offer_id) REFERENCES dev.offers(offer_id) ON DELETE CASCADE
+);
+
+-- Table Triggers
+
+create trigger trigger_notification_change after
+insert
+    or
+delete
+    or
+update
+    on
+    dev.notifications for each row execute function dev.notify_notification_change();
+
+
+-- dev.users_notifications definition
+
+-- Drop table
+
+-- DROP TABLE dev.users_notifications;
+
+CREATE TABLE dev.users_notifications (
+	uid text NOT NULL,
+	sent_at timestamptz DEFAULT now() NOT NULL,
+	notification_id int4 NOT NULL,
+	withdrawn bool DEFAULT false NOT NULL,
+	"read" bool DEFAULT false NULL,
+	reason_key text NULL,
+	reason_category text STORAGE MAIN NULL,
+	reason_store text STORAGE MAIN NULL,
+	reason_min_price numeric NULL,
+	reason_max_price numeric NULL,
+	reason_min_discount numeric NULL,
+	CONSTRAINT users_notifications_pk PRIMARY KEY (uid, sent_at, notification_id),
+	CONSTRAINT users_notifications_notifications_fk FOREIGN KEY (notification_id) REFERENCES dev.notifications(id) ON DELETE CASCADE,
+	CONSTRAINT users_notifications_users_fk FOREIGN KEY (uid) REFERENCES dev.users(uid) ON DELETE CASCADE
+);
